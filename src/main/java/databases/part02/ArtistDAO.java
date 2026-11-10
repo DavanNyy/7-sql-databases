@@ -1,5 +1,10 @@
 package databases.part02;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +20,9 @@ public class ArtistDAO {
      */
     private final String connectionString;
 
+    // Tallentaa tietokannan osoitteen.
+    // Käytetään aina, kun muodostetaan yhteys tietokantaan.
+
     /**
      * Creates a new ArtistDAO that uses the specified connection string to connect
      * to the database. For example: "jdbc:sqlite:data/Chinook_Sqlite.sqlite"
@@ -23,6 +31,8 @@ public class ArtistDAO {
      */
     public ArtistDAO(String connectionString) {
         this.connectionString = connectionString;
+
+        // Konstruktori tallentaa annetun yhteysosoitteen muuttujaan.
     }
 
     /**
@@ -43,6 +53,22 @@ public class ArtistDAO {
          * to the database. You can't "hard code" the connection string, as that would
          * make tests run against your actual database, which may have unexpected data.
          */
+        String sql = "SELECT ArtistId, Name FROM Artist ORDER BY Name ASC";
+
+        try (Connection connection = DriverManager.getConnection(connectionString);  // Muodostaa yhteyden tietokantaan.
+                PreparedStatement preparedStatement = connection.prepareStatement(sql); // Valmistelee SQL-kyselyn suoritettavaksi.
+                ResultSet resultSet = preparedStatement.executeQuery()) { //Suorittaa kyselyn.Tallentaa tulokset ResultSet-olioon.
+
+            while (resultSet.next()) { //Siirtyy seuraavaan tietokannan riviin. Toistuu niin kauan kuin rivejä löytyy.
+                long id = resultSet.getLong("ArtistId"); //Hakee artistin id:n.
+                String name = resultSet.getString("Name"); //Hakee artistin nimen.
+
+                artists.add(new Artist(id, name)); //Luo uuden Artist-olion. Lisää sen listaan.
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } //Jos tietokannassa tapahtuu virhe, tulostetaan virheen tiedot.
 
         return artists;
     }
@@ -55,7 +81,7 @@ public class ArtistDAO {
      * @return the artist with the specified id, or null if no artist exists with
      *         that id.
      */
-    public Artist getArtistById(long id) {
+    public Artist getArtistById(long id) { //Hakee yhden artistin id:n perusteella.
         /*
          * hint: use similar code to the getArtists() method above, but add a WHERE
          * clause to the SQL query to only retrieve the artist with the specified id.
@@ -71,6 +97,11 @@ public class ArtistDAO {
          * to the database. You can't "hard code" the connection string, as that would
          * make tests run against your actual database, which may have unexpected data.
          */
+        for (Artist artist : getArtists()) {  //Hakee kaikki artistit.
+            if (artist.getId() == id) {  //Verrataan artistin id:tä annettuun id:hen.
+                return artist;
+            }
+        }
         return null;
     }
 }
