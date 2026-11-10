@@ -97,10 +97,22 @@ public class ArtistDAO {
          * to the database. You can't "hard code" the connection string, as that would
          * make tests run against your actual database, which may have unexpected data.
          */
-        for (Artist artist : getArtists()) {  //Hakee kaikki artistit.
-            if (artist.getId() == id) {  //Verrataan artistin id:tä annettuun id:hen.
-                return artist;
+        String sql = "SELECT ArtistId, Name FROM Artist WHERE ArtistId = ?";
+
+        try (Connection connection = DriverManager.getConnection(connectionString);
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setLong(1, id);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    long artistId = resultSet.getLong("ArtistId");
+                    String name = resultSet.getString("Name");
+                    return new Artist(artistId, name);
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return null;
     }

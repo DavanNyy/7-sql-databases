@@ -1,5 +1,11 @@
 package databases.part03;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import databases.part02.Artist;
@@ -46,7 +52,31 @@ public class AlbumDAO {
          *
          * Make sure to sort the albums by AlbumId in ascending order (low to high).
          */
-        return null;
+        List<Album> albums = new ArrayList<>();
+
+        String sql = "SELECT AlbumId, Title, ArtistId FROM Album WHERE ArtistId = ? ORDER BY AlbumId ASC";
+
+        try (
+                Connection connection = DriverManager.getConnection(connectionString);
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setLong(1, artist.getId());
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                long id = resultSet.getLong("AlbumId");
+                String title = resultSet.getString("Title");
+
+                long artistId = resultSet.getLong("ArtistId");
+                albums.add(new Album(id, title, artistId));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return albums;
     }
 
     /**
@@ -67,7 +97,21 @@ public class AlbumDAO {
          *
          * Remember to use the `connectionString` instead of hard coding it ;)
          */
-        return false;
+        String sql = "INSERT INTO Album (Title, ArtistId) VALUES (?, ?)";
+        // Lisää uuden albumin tietokantaan.
+        // AlbumId jätetään pois, koska tietokanta luo sen automaattisesti.
+        try (
+                Connection connection = DriverManager.getConnection(connectionString);
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, album.getTitle());
+            // Ensimmäinen ? = albumin nimi.
+            preparedStatement.setLong(2, album.getArtistId());
+            // Toinen ? = albumin artistin id.
+            return preparedStatement.executeUpdate() > 0; // Jos lisättiin vähintään 1 rivi → palauttaa true.
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false; // Jos lisäys epäonnistui, palautetaan false.
     }
 
     /**
@@ -86,6 +130,23 @@ public class AlbumDAO {
          * Remember to use the `connectionString` instead of hard coding it, otherwise
          * your tests will be deleting albums from your actual database!
          */
+        String sql = "UPDATE Album SET Title = ?, ArtistId = ? WHERE AlbumId = ?";
+        // Päivitä albumin nimi (Title)
+        // Päivitä artistin id (ArtistId)
+        // Etsi päivitettävä albumi sen AlbumId:n avulla
+        try (Connection connection = DriverManager.getConnection(connectionString);
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, album.getTitle()); // albumin uusi nimi
+            preparedStatement.setLong(2, album.getArtistId()); // artistin id
+            preparedStatement.setLong(3, album.getId()); // päivitettävän albumin id
+
+            return preparedStatement.executeUpdate() > 0; // Jos päivitys onnistui, palautetaan true. executeUpdate()
+            // suorittaa UPDATE-kyselyn
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
@@ -103,6 +164,16 @@ public class AlbumDAO {
          * Remember to use the `connectionString` instead of hard coding it, otherwise
          * your tetss will be deleting albums from your actual database!
          */
+        String sql = "DELETE FROM Album WHERE AlbumId = ?";
+        // Poista albumi sen AlbumId:n avulla
+        try (Connection connection = DriverManager.getConnection(connectionString);
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setLong(1, album.getId()); // albumin id
+            return preparedStatement.executeUpdate() > 0; // Jos poisto onnistui, palautetaan true. executeUpdate()
+                                                          // suorittaa DELETE-kyselyn
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 }
