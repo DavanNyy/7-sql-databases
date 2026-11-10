@@ -12,6 +12,8 @@ import java.sql.SQLException;
  * not reusable. It is still useful to understand the basics of JDBC.
  *
  * We'll improve this in the next part.
+ * 
+ * 
  */
 public class JdbcDemoMain {
 
@@ -33,19 +35,29 @@ public class JdbcDemoMain {
          * in the finally block. This ensures that the resources are closed even if an
          * exception is thrown and the try block is exited early.
          */
+        String sql = "SELECT ArtistId, Name FROM Artist ORDER BY Name ASC";
+        // Hae taulusta Artist
+        // Sarakkeet ArtistId ja Name
+        // Järjestä nimet aakkosjärjestykseen (ASC)
+
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
         try {
             // Create a connection to the database
+            // Tämä avaa yhteyden SQLite-tietokantaan.
             connection = DriverManager.getConnection(JDBC_CONNECTION_STRING);
 
             // Create a prepared statement to execute a query
-            preparedStatement = connection.prepareStatement("SELECT ArtistId, Name FROM Artist ORDER BY ArtistId ASC");
+            preparedStatement = connection.prepareStatement(sql);
 
             // Execute the query and get the result set
             resultSet = preparedStatement.executeQuery();
+
+            // PreparedStatement sisältää SQL-kyselyn.
+            // executeQuery() suorittaa kyselyn.
+            // Tulokset tallennetaan ResultSet-olioon.
 
             /*
              * Iterate over the result set and print the results. The result set contains
@@ -63,9 +75,13 @@ public class JdbcDemoMain {
                  * the column in the result set. There are also methods for other types of
                  * data, such as getInt() and getDouble().
                  */
+                long artistId = resultSet.getLong("ArtistId");
                 String name = resultSet.getString("Name");
+                System.out.println(artistId + " " + name);
 
-                System.out.println(name);
+                // resultSet.next() siirtyy seuraavalle riville.
+                // getString("Name") hakee artistin nimen.
+                // System.out.println(name) tulostaa nimen.
             }
         } catch (SQLException e) {
             /*
@@ -74,6 +90,8 @@ public class JdbcDemoMain {
              * handle the exception, we just print the stack trace and exit.
              */
             e.printStackTrace();
+
+            // Jos tietokantayhteys tai kysely epäonnistuu, virhe tulostetaan.
 
         } finally {
             /*
@@ -84,13 +102,13 @@ public class JdbcDemoMain {
              * close the resources, or use a try-with-resources block.
              */
             try {
-                if (resultSet != null) {
+                if (resultSet != null) {  // tulokset (ResultSet)
                     resultSet.close();
                 }
-                if (preparedStatement != null) {
+                if (preparedStatement != null) {  // kysely (PreparedStatement)
                     preparedStatement.close();
                 }
-                if (connection != null) {
+                if (connection != null) {  // tietokantayhteys (Connection)
                     connection.close();
                 }
             } catch (Exception e) {
@@ -99,6 +117,8 @@ public class JdbcDemoMain {
                  * need to catch them.
                  */
                 e.printStackTrace();
+
+                // Jos resurssien sulkemisen aikana tulee virhe, näytä virheilmoitus.
             }
         }
     }
